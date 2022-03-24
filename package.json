@@ -21,6 +21,11 @@
   "main": "src/index.js",
   "module": "src/index.js",
   "types": "./types",
+  "directories": {},
+  "files": [
+    "src",
+    "types"
+  ],
   "scripts": {
     "ci": "npm-run-all lint test types",
     "lint": "eslint --fix --ext .js .",
