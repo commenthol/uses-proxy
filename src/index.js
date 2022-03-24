@@ -39,11 +39,15 @@ export function usesProxy () {
 }
 
 /**
- * @param {string|string[]} noProxy
+ * @param {string|string[]} [noProxy]
  * @returns {NoProxyList|undefined}
  */
 export function getNoProxy (noProxy) {
   let list = []
+
+  if (!noProxy) {
+    return
+  }
   if (typeof noProxy === 'string') {
     list = noProxy.split(',')
   }
@@ -129,11 +133,11 @@ export function matchNetwork (range, ipParsed) {
 
 /**
  * @param {object} param0
- * @param {string} param0.proxyUri
- * @param {string|string[]} param0.noProxy
+ * @param {string} [param0.proxyUri]
+ * @param {string|string[]} [param0.noProxy]
  * @returns {(hostname: string)=> boolean}
  */
-export function shouldProxy ({ proxyUri, noProxy }) {
+export function shouldProxy ({ proxyUri = '', noProxy = '' } = {}) {
   const list = getNoProxy(noProxy)
   const usesIps = list?.ranges.length
 
