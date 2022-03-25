@@ -17,7 +17,7 @@ Detects and uses `http(s)_proxy` and `no_proxy` environment variables.
 # usage
 
 ```
-npm i no-proxy-env
+npm i uses-proxy
 ```
 
 ```js
