@@ -1,6 +1,6 @@
 {
   "name": "uses-proxy",
-  "version": "1.0.0-1",
+  "version": "1.0.0",
   "description": "Check if a url shall be proxied through a http(s) proxy",
   "keywords": [
     "proxy",
