@@ -3,14 +3,14 @@
  */
 export function usesProxy(): {
     proxyUri?: string;
-    protocol?: 'https' | 'http';
+    protocol?: "https" | "http";
     noProxy?: string;
 };
 /**
  * @param {string|string[]} [noProxy]
  * @returns {NoProxyList|undefined}
  */
-export function getNoProxy(noProxy?: string | string[] | undefined): NoProxyList | undefined;
+export function getNoProxy(noProxy?: string | string[]): NoProxyList | undefined;
 /**
  * @param {string} value
  * @param {string} hostname
@@ -36,11 +36,7 @@ export function shouldProxy({ proxyUri, noProxy }?: {
 export type IpRange = [ipaddr.IPv4 | ipaddr.IPv6, number];
 export type NoProxyList = {
     values: string[];
-    ranges: [ipaddr.IPv4 | ipaddr.IPv6, number][];
+    ranges: IpRange[];
 };
 export type IpAddress = ipaddr.IPv4 | ipaddr.IPv6;
-declare const proxyUri: string | undefined;
-declare const protocol: "http" | "https" | undefined;
-declare const noProxy: string | undefined;
-import ipaddr from "ipaddr.js";
-export {};
+import ipaddr from 'ipaddr.js';

@@ -1,7 +1,12 @@
 import assert from 'assert'
 import ipaddr from 'ipaddr.js'
 
-import { getNoProxy, matchDomain, matchNetwork, shouldProxy } from '../src/index.js'
+import {
+  getNoProxy,
+  matchDomain,
+  matchNetwork,
+  shouldProxy
+} from '../src/index.js'
 
 describe('uses-proxy', function () {
   describe('getNoProxy', function () {
@@ -26,7 +31,9 @@ describe('uses-proxy', function () {
     })
 
     it('should create proxy list', function () {
-      const list = getNoProxy('localhost,127.0.0.0/8,172.1.0.1,10.0.*,.tempuri.org,exact.com')
+      const list = getNoProxy(
+        'localhost,127.0.0.0/8,172.1.0.1,10.0.*,.tempuri.org,exact.com'
+      )
       assert.deepStrictEqual(list, {
         values: ['localhost', '.tempuri.org', 'exact.com'],
         ranges: [
@@ -91,7 +98,10 @@ describe('uses-proxy', function () {
   })
 
   describe('shouldProxy', function () {
-    const matcher = shouldProxy({ proxyUri: 'http://localhost:8080', noProxy: 'localhost,127.0.0.0/8,172.1.0.1,10.1.*,.tempuri.org,*.bar' })
+    const matcher = shouldProxy({
+      proxyUri: 'http://localhost:8080',
+      noProxy: 'localhost,127.0.0.0/8,172.1.0.1,10.1.*,.tempuri.org,*.bar'
+    })
     const tests = [
       ['localhost', false],
       ['sub.tempuri.org', false],

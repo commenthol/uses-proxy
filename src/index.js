@@ -8,29 +8,22 @@ import ipaddr from 'ipaddr.js'
 /** @typedef {{values: string[], ranges: IpRange[]}} NoProxyList */
 /** @typedef {ipaddr.IPv4 | ipaddr.IPv6} IpAddress */
 
-/* eslint-disable camelcase */
-const {
-  http_proxy,
-  HTTP_PROXY,
-  https_proxy,
-  HTTPS_PROXY,
-  no_proxy,
-  NO_PROXY
-} = process.env
+const { http_proxy, HTTP_PROXY, https_proxy, HTTPS_PROXY, no_proxy, NO_PROXY } =
+  process.env
 
 const proxyUri = http_proxy || HTTP_PROXY || https_proxy || HTTPS_PROXY
-const protocol = http_proxy || HTTP_PROXY
-  ? 'http'
-  : https_proxy || HTTPS_PROXY
-    ? 'https'
-    : undefined
+const protocol =
+  http_proxy || HTTP_PROXY
+    ? 'http'
+    : https_proxy || HTTPS_PROXY
+      ? 'https'
+      : undefined
 const noProxy = no_proxy || NO_PROXY
-/* eslint-enable camelcase */
 
 /**
  * @returns {{ proxyUri?: string, protocol?: 'https'|'http', noProxy?: string }}
  */
-export function usesProxy () {
+export function usesProxy() {
   return {
     proxyUri,
     protocol,
@@ -42,7 +35,7 @@ export function usesProxy () {
  * @param {string|string[]} [noProxy]
  * @returns {NoProxyList|undefined}
  */
-export function getNoProxy (noProxy) {
+export function getNoProxy(noProxy) {
   let list = []
 
   if (!noProxy) {
@@ -55,31 +48,36 @@ export function getNoProxy (noProxy) {
     return
   }
 
-  return list.map(item => {
-    const range = getIpRange(item)
-    if (range) {
-      return {
-        range
+  return list
+    .map((item) => {
+      const range = getIpRange(item)
+      if (range) {
+        return {
+          range
+        }
+      } else {
+        if (item.indexOf('*.') === 0) {
+          item = item.substring(1)
+        }
+        return {
+          value: item
+        }
       }
-    } else {
-      if (item.indexOf('*.') === 0) {
-        item = item.substring(1)
-      }
-      return {
-        value: item
-      }
-    }
-  }).filter(Boolean)
-    .reduce((acc, cur) => {
-      if (cur.value) {
-        // @ts-ignore
-        acc.values.push(cur.value)
-      } else if (cur.range) {
-        // @ts-ignore
-        acc.ranges.push(cur.range)
-      }
-      return acc
-    }, { values: [], ranges: [] })
+    })
+    .filter(Boolean)
+    .reduce(
+      (acc, cur) => {
+        if (cur.value) {
+          // @ts-ignore
+          acc.values.push(cur.value)
+        } else if (cur.range) {
+          // @ts-ignore
+          acc.ranges.push(cur.range)
+        }
+        return acc
+      },
+      { values: [], ranges: [] }
+    )
 }
 
 /**
@@ -105,6 +103,7 @@ const getIpRange = (ipRange) => {
 const parseIp = (ip) => {
   try {
     return ipaddr.parse(ip)
+    // eslint-disable-next-line no-unused-vars
   } catch (e) {
     return null
   }
@@ -115,7 +114,7 @@ const parseIp = (ip) => {
  * @param {string} hostname
  * @returns {boolean}
  */
-export function matchDomain (value, hostname) {
+export function matchDomain(value, hostname) {
   const index = (hostname || '').indexOf(value)
   return value[0] === '.'
     ? index >= 0 && value.length + index === hostname.length
@@ -127,7 +126,7 @@ export function matchDomain (value, hostname) {
  * @param {IpAddress} ipParsed
  * @returns {boolean}
  */
-export function matchNetwork (range, ipParsed) {
+export function matchNetwork(range, ipParsed) {
   return ipParsed.match(...range)
 }
 
@@ -137,7 +136,7 @@ export function matchNetwork (range, ipParsed) {
  * @param {string|string[]} [param0.noProxy]
  * @returns {(hostname: string)=> boolean}
  */
-export function shouldProxy ({ proxyUri = '', noProxy = '' } = {}) {
+export function shouldProxy({ proxyUri = '', noProxy = '' } = {}) {
   const list = getNoProxy(noProxy)
   const usesIps = list?.ranges.length
 
@@ -145,12 +144,13 @@ export function shouldProxy ({ proxyUri = '', noProxy = '' } = {}) {
     if (!proxyUri) {
       return false
     }
-    if (!list) { // proxy all requests
+    if (!list) {
+      // proxy all requests
       return true
     }
 
     if (usesIps) {
-      const ipParsed = (/(^\d|[:])/.test(hostname)) && parseIp(hostname)
+      const ipParsed = /(^\d|[:])/.test(hostname) && parseIp(hostname)
 
       if (ipParsed) {
         // @ts-ignore
