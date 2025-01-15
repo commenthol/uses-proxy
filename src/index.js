@@ -5,7 +5,7 @@
 import ipaddr from 'ipaddr.js'
 
 /** @typedef {[ipaddr.IPv4 | ipaddr.IPv6, number]} IpRange */
-/** @typedef {{values: string[], ranges: IpRange[]}} NoProxyList */
+/** @typedef {{values?: string[], ranges?: IpRange[], all?: boolean}} NoProxyList */
 /** @typedef {ipaddr.IPv4 | ipaddr.IPv6} IpAddress */
 
 const { http_proxy, HTTP_PROXY, https_proxy, HTTPS_PROXY, no_proxy, NO_PROXY } =
@@ -36,48 +36,46 @@ export function usesProxy() {
  * @returns {NoProxyList|undefined}
  */
 export function getNoProxy(noProxy) {
-  let list = []
-
   if (!noProxy) {
     return
   }
+
+  let list = []
   if (typeof noProxy === 'string') {
-    list = noProxy.split(',')
+    list = noProxy.split(',').map((m) => m.trim())
   }
-  if (list.includes('*') || !noProxy) {
+  if (list.includes('*')) {
+    return { all: true }
+  }
+
+  const values = new Set()
+  const ranges = new Set()
+
+  for (const item of list) {
+    const range = getIpRange(item)
+    if (range) {
+      ranges.add(range)
+      continue
+    }
+    let _item = item
+    if (item.startsWith('*.')) {
+      _item = item.slice(2)
+    } else if (item.startsWith('.')) {
+      _item = item.slice(1)
+    }
+    if (_item.length) {
+      values.add(_item)
+    }
+  }
+
+  if (!values.size && !ranges.size) {
     return
   }
 
-  return list
-    .map((item) => {
-      const range = getIpRange(item)
-      if (range) {
-        return {
-          range
-        }
-      } else {
-        if (item.indexOf('*.') === 0) {
-          item = item.substring(1)
-        }
-        return {
-          value: item
-        }
-      }
-    })
-    .filter(Boolean)
-    .reduce(
-      (acc, cur) => {
-        if (cur.value) {
-          // @ts-ignore
-          acc.values.push(cur.value)
-        } else if (cur.range) {
-          // @ts-ignore
-          acc.ranges.push(cur.range)
-        }
-        return acc
-      },
-      { values: [], ranges: [] }
-    )
+  return {
+    values: [...values],
+    ranges: [...ranges]
+  }
 }
 
 /**
@@ -114,21 +112,14 @@ const parseIp = (ip) => {
  * @param {string} hostname
  * @returns {boolean}
  */
-export function matchDomain(value, hostname) {
-  const index = (hostname || '').indexOf(value)
-  return value[0] === '.'
-    ? index >= 0 && value.length + index === hostname.length
-    : index === 0
-}
+export const matchDomain = (value, hostname) => hostname.endsWith(value)
 
 /**
  * @param {IpRange} range
  * @param {IpAddress} ipParsed
  * @returns {boolean}
  */
-export function matchNetwork(range, ipParsed) {
-  return ipParsed.match(...range)
-}
+export const matchNetwork = (range, ipParsed) => ipParsed.match(...range)
 
 /**
  * @param {object} param0
@@ -138,15 +129,16 @@ export function matchNetwork(range, ipParsed) {
  */
 export function shouldProxy({ proxyUri = '', noProxy = '' } = {}) {
   const list = getNoProxy(noProxy)
-  const usesIps = list?.ranges.length
+  const usesIps = list?.ranges?.length
 
   return (hostname) => {
-    if (!proxyUri) {
-      return false
-    }
     if (!list) {
       // proxy all requests
       return true
+    }
+    if (!hostname || !proxyUri || list.all) {
+      // no proxy all requests
+      return false
     }
 
     if (usesIps) {
@@ -163,7 +155,7 @@ export function shouldProxy({ proxyUri = '', noProxy = '' } = {}) {
       }
     }
 
-    // @ts-ignore
+    // @ts-expect-error
     for (const value of list.values) {
       if (matchDomain(value, hostname)) {
         return false

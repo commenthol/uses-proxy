@@ -12,30 +12,35 @@ describe('uses-proxy', function () {
   describe('getNoProxy', function () {
     it('should return no list if undefined', function () {
       const list = getNoProxy()
-      assert.strictEqual(list, undefined)
+      assert.equal(list, undefined)
     })
 
     it('should proxy all requests if "*"', function () {
       const list = getNoProxy('*')
-      assert.strictEqual(list, undefined)
+      assert.deepEqual(list, { all: true })
+    })
+
+    it('should proxy all requests', function () {
+      const list = getNoProxy('*., .')
+      assert.deepEqual(list, undefined)
     })
 
     it('should proxy all requests if "*" is part of no_proxy', function () {
-      const list = getNoProxy('localhost,127.0.0.1,*')
-      assert.strictEqual(list, undefined)
+      const list = getNoProxy('localhost, 127.0.0.1, *')
+      assert.deepEqual(list, { all: true })
     })
 
     it('should proxy all requests for *.tempuri.org', function () {
       const list = getNoProxy('*.tempuri.org')
-      assert.deepStrictEqual(list, { values: ['.tempuri.org'], ranges: [] })
+      assert.deepStrictEqual(list, { values: ['tempuri.org'], ranges: [] })
     })
 
     it('should create proxy list', function () {
       const list = getNoProxy(
-        'localhost,127.0.0.0/8,172.1.0.1,10.0.*,.tempuri.org,exact.com'
+        'localhost,127.0.0.0/8,172.1.0.1,10.0.*,.tempuri.org,exact.com, t'
       )
-      assert.deepStrictEqual(list, {
-        values: ['localhost', '.tempuri.org', 'exact.com'],
+      assert.deepEqual(list, {
+        values: ['localhost', 'tempuri.org', 'exact.com', 't'],
         ranges: [
           ipaddr.parseCIDR('127.0.0.0/8'),
           ipaddr.parseCIDR('172.1.0.1/32'),
@@ -58,7 +63,7 @@ describe('uses-proxy', function () {
 
     it('shall not matchDomain if not exact subdomain', function () {
       const matches = matchDomain('tempuri.org', 'sub.tempuri.org')
-      assert.ok(!matches)
+      assert.ok(matches)
     })
 
     it('shall matchDomain if same domain', function () {
@@ -98,14 +103,17 @@ describe('uses-proxy', function () {
   })
 
   describe('shouldProxy', function () {
-    const matcher = shouldProxy({
-      proxyUri: 'http://localhost:8080',
-      noProxy: 'localhost,127.0.0.0/8,172.1.0.1,10.1.*,.tempuri.org,*.bar'
+    let matcher
+    before(function () {
+      matcher = shouldProxy({
+        proxyUri: 'http://localhost:8080',
+        noProxy: 'localhost,127.0.0.0/8,172.1.0.1,10.1.*,.tempuri.org,*.bar'
+      })
     })
     const tests = [
       ['localhost', false],
       ['sub.tempuri.org', false],
-      ['tempuri.org', true],
+      ['tempuri.org', false],
       ['foo.bar', false],
       ['.bar', false],
       ['127.4.0.1', false],
@@ -113,7 +121,7 @@ describe('uses-proxy', function () {
       ['172.1.0.1', false],
       ['172.1.0.2', true],
       ['172nonsense', true],
-      [null, true]
+      [null, false]
     ]
     tests.forEach(([hostname, exp]) => {
       it('' + hostname, function () {
@@ -128,7 +136,7 @@ describe('uses-proxy', function () {
 
     it('no proxy at all', function () {
       const matcher = shouldProxy({})
-      assert.strictEqual(matcher('foo.bar'), false)
+      assert.strictEqual(matcher('foo.bar'), true)
     })
   })
 

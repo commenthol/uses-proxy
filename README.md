@@ -8,7 +8,7 @@ Detects and uses `http(s)_proxy` and `no_proxy` environment variables.
 
 - Environment variables lowercase precedence. `no_proxy` comes before `NO_PROXY`
 - Matches suffixes
-- Does not strip leading `.`
+- Strips leading `.`
 - `*` matches all hosts
 - No support for regexes.
 - Supports CIDR Blocks
@@ -30,13 +30,13 @@ const {
 
 const matcher = shouldProxy({
   proxyUri,
-  noProxy: noProxy || 'localhost,.tempuri.org'
+  noProxy: noProxy || 'localhost, tempuri.org'
 })
 
 matcher('localhost') // >> false
 matcher('test.com') // >> true
 matcher('test.tempuri.org') // >> false
-matcher('tempuri.org') // >> true
+matcher('tempuri.org') // >> false
 ```
 
 # license
